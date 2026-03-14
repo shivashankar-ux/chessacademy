@@ -174,7 +174,7 @@ export default function ChessHeroScene() {
     queen.add(topOrb)
 
     queen.scale.set(2.2, 2.2, 2.2)
-    queen.position.set(0, -4, 0)
+    queen.position.set(-3, -4, 0)
     scene.add(queen)
 
     const boardGroup = new THREE.Group()
