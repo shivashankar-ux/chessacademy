@@ -1,91 +1,39 @@
 import { useRef, useEffect } from 'react'
 import * as THREE from 'three'
 
-// ── Minimal chess engine ──────────────────────────────────────────────────────
-const W = 1, B = 2
-const PAWN = 1, KNIGHT = 2, BISHOP = 3, ROOK = 4, QUEEN = 5, KING = 6
+// ── 3 real games as move sequences [fromCol, fromRow, toCol, toRow] ──────────
+const GAMES = [
+  // Game 1: Scholar's Mate
+  [
+    [4,1,4,3], // e4
+    [4,6,4,4], // e5
+    [5,0,2,3], // Bc4
+    [1,7,2,5], // Nc6
+    [3,0,7,4], // Qh5
+    [6,7,5,5], // Nf6
+    [7,4,5,6], // Qxf7#
+  ],
+  // Game 2: Fool's Mate (fastest checkmate)
+  [
+    [5,1,5,2], // f3
+    [4,6,4,4], // e5
+    [6,1,6,3], // g4
+    [3,7,7,3], // Qh4#
+  ],
+  // Game 3: Simple King's Gambit mini
+  [
+    [4,1,4,3], // e4
+    [4,6,4,4], // e5
+    [5,1,5,3], // f4
+    [4,4,5,3], // exf4
+    [5,0,2,3], // Bc4
+    [3,6,3,5], // d6
+    [3,0,7,4], // Qh5
+    [6,7,6,5], // g6
+    [7,4,5,6], // Qxf7#
+  ],
+]
 
-function initBoard() {
-  const b = Array.from({ length: 8 }, () => Array(8).fill(null))
-  const back = [ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK]
-  for (let c = 0; c < 8; c++) {
-    b[0][c] = { type: back[c], color: W }
-    b[1][c] = { type: PAWN, color: W }
-    b[6][c] = { type: PAWN, color: B }
-    b[7][c] = { type: back[c], color: B }
-  }
-  return b
-}
-
-function inBounds(r, c) { return r >= 0 && r < 8 && c >= 0 && c < 8 }
-
-function getMoves(board, r, c) {
-  const piece = board[r][c]
-  if (!piece) return []
-  const moves = []
-  const { type, color } = piece
-  const enemy = color === W ? B : W
-
-  function push(nr, nc) {
-    if (!inBounds(nr, nc)) return false
-    const t = board[nr][nc]
-    if (t && t.color === color) return false
-    moves.push({ from: [r, c], to: [nr, nc], capture: !!t })
-    return !t
-  }
-
-  if (type === PAWN) {
-    const dir = color === W ? 1 : -1
-    const start = color === W ? 1 : 6
-    if (inBounds(r + dir, c) && !board[r + dir][c]) {
-      moves.push({ from: [r, c], to: [r + dir, c], capture: false })
-      if (r === start && !board[r + dir * 2][c])
-        moves.push({ from: [r, c], to: [r + dir * 2, c], capture: false })
-    }
-    for (const dc of [-1, 1])
-      if (inBounds(r + dir, c + dc) && board[r + dir][c + dc]?.color === enemy)
-        moves.push({ from: [r, c], to: [r + dir, c + dc], capture: true })
-  } else if (type === KNIGHT) {
-    for (const [dr, dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) push(r+dr, c+dc)
-  } else if (type === BISHOP || type === QUEEN) {
-    for (const [dr, dc] of [[-1,-1],[-1,1],[1,-1],[1,1]])
-      for (let i = 1; i < 8; i++) if (!push(r+dr*i, c+dc*i)) break
-  }
-  if (type === ROOK || type === QUEEN) {
-    for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]])
-      for (let i = 1; i < 8; i++) if (!push(r+dr*i, c+dc*i)) break
-  }
-  if (type === KING)
-    for (const [dr, dc] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]) push(r+dr, c+dc)
-  return moves
-}
-
-function getAllMoves(board, color) {
-  const all = []
-  for (let r = 0; r < 8; r++)
-    for (let c = 0; c < 8; c++)
-      if (board[r][c]?.color === color) all.push(...getMoves(board, r, c))
-  return all
-}
-
-function applyMove(board, move) {
-  const nb = board.map(r => r.map(p => p ? { ...p } : null))
-  nb[move.to[0]][move.to[1]] = nb[move.from[0]][move.from[1]]
-  nb[move.from[0]][move.from[1]] = null
-  if (nb[move.to[0]][move.to[1]]?.type === PAWN && (move.to[0] === 7 || move.to[0] === 0))
-    nb[move.to[0]][move.to[1]].type = QUEEN
-  return nb
-}
-
-function pickMove(board, color) {
-  const moves = getAllMoves(board, color)
-  if (!moves.length) return null
-  const captures = moves.filter(m => m.capture)
-  const pool = captures.length ? captures : moves
-  return pool[Math.floor(Math.random() * pool.length)]
-}
-
-// ── THREE.js component ────────────────────────────────────────────────────────
 export default function ChessBoard3D() {
   const mountRef = useRef(null)
 
@@ -209,62 +157,84 @@ export default function ChessBoard3D() {
     ground.rotation.x=-Math.PI/2; ground.position.y=-0.12; ground.receiveShadow=true; scene.add(ground)
 
     const YB=0.1, SC=0.65
+    // pieceMap[row][col] = mesh (child of boardGroup)
     let pieceMap=Array.from({length:8},()=>Array(8).fill(null))
 
-    function colRow2World(r,c){ return new THREE.Vector3((c-N/2+0.5)*SQ, YB, (r-N/2+0.5)*SQ) }
+    function colRow2Local(r,c){ return new THREE.Vector3((c-N/2+0.5)*SQ, YB, (r-N/2+0.5)*SQ) }
 
-    function buildMesh(type,color){
-      const mat=color===W?whiteMat:blackMat
+    const PIECE_TYPES = [null,'pawn','knight','bishop','rook','queen','king']
+    const W_COLOR=1, B_COLOR=2
+
+    function buildMesh(type, color){
+      const mat = color===W_COLOR ? whiteMat : blackMat
       switch(type){
-        case PAWN: return buildPawn(mat)
-        case KNIGHT: return buildKnight(mat)
-        case BISHOP: return buildBishop(mat,goldMat)
-        case ROOK: return buildRook(mat,goldMat)
-        case QUEEN: return buildQueen(mat,goldMat)
-        case KING: return buildKing(mat,goldMat)
+        case 1: return buildPawn(mat)
+        case 2: return buildKnight(mat)
+        case 3: return buildBishop(mat, goldMat)
+        case 4: return buildRook(mat, goldMat)
+        case 5: return buildQueen(mat, goldMat)
+        case 6: return buildKing(mat, goldMat)
         default: return new THREE.Group()
       }
     }
 
-    function spawnBoard(board){
-      for(let r=0;r<8;r++) for(let c=0;c<8;c++) if(pieceMap[r][c]){scene.remove(pieceMap[r][c]);pieceMap[r][c]=null}
-      for(let r=0;r<8;r++) for(let c=0;c<8;c++){
-        const p=board[r][c]; if(!p) continue
-        const mesh=buildMesh(p.type,p.color)
-        mesh.scale.set(SC,SC,SC); mesh.position.copy(colRow2World(r,c))
-        boardGroup.add(mesh); pieceMap[r][c]=mesh
+    // Initial board layout: [type, color]
+    // rows 0-1 = white, rows 6-7 = black
+    function makeInitialPieceMap() {
+      const pm = Array.from({length:8},()=>Array(8).fill(null))
+      const backRow = [4,2,3,5,6,3,2,4]
+      for(let c=0;c<8;c++){
+        // white
+        const wBack = buildMesh(backRow[c], W_COLOR); wBack.scale.set(SC,SC,SC); wBack.position.copy(colRow2Local(0,c)); boardGroup.add(wBack); pm[0][c]=wBack
+        const wPawn = buildMesh(1, W_COLOR); wPawn.scale.set(SC,SC,SC); wPawn.position.copy(colRow2Local(1,c)); boardGroup.add(wPawn); pm[1][c]=wPawn
+        // black
+        const bBack = buildMesh(backRow[c], B_COLOR); bBack.scale.set(SC,SC,SC); bBack.position.copy(colRow2Local(7,c)); boardGroup.add(bBack); pm[7][c]=bBack
+        const bPawn = buildMesh(1, B_COLOR); bPawn.scale.set(SC,SC,SC); bPawn.position.copy(colRow2Local(6,c)); boardGroup.add(bPawn); pm[6][c]=bPawn
       }
+      return pm
     }
 
-    const anims=[]
-    let boardState=initBoard(), currentTurn=W, moveTimer=0
-    const MOVE_INTERVAL=0.45, ANIM_DURATION=0.35
-    let gameOver=false, resetTimer=0
-    spawnBoard(boardState)
+    pieceMap = makeInitialPieceMap()
+
+    // Animation queue
+    const anims = []
+    let currentGame = 0
+    let currentMove = 0
+    let moveTimer = 0
+    const MOVE_INTERVAL = 1.2   // seconds between moves — readable pace
+    const ANIM_DURATION = 0.5
 
     function easeInOut(t){ return t<0.5?2*t*t:-1+(4-2*t)*t }
 
-    function triggerMove(){
-      const move=pickMove(boardState,currentTurn)
-      if(!move){gameOver=true;return}
-      const [fr,fc]=move.from, [tr,tc]=move.to
-      const movingMesh=pieceMap[fr][fc]
-      if(!movingMesh) return
-if(move.capture&&pieceMap[tr][tc]){scene.remove(pieceMap[tr][tc]);pieceMap[tr][tc]=null}      const fromPos=colRow2World(fr,fc).clone()
-      const toPos=colRow2World(tr,tc).clone()
-      boardState=applyMove(boardState,move)
-      pieceMap[fr][fc]=null; pieceMap[tr][tc]=movingMesh
-      anims.push({mesh:movingMesh,from:fromPos,to:toPos,arcHeight:2.2+Math.random()*1.5,duration:ANIM_DURATION,elapsed:0})
-      let wK=false,bK=false
-      for(let r=0;r<8;r++) for(let c=0;c<8;c++){const p=boardState[r][c];if(p?.type===KING){if(p.color===W)wK=true;else bK=true}}
-      if(!wK||!bK){gameOver=true;return}
-      currentTurn=currentTurn===W?B:W
-    }
+    function playNextMove() {
+      const game = GAMES[currentGame]
+      if (currentMove >= game.length) {
+        // game finished — pause then reset to next game
+        moveTimer = -2.5 // extra pause at end
+        currentGame = (currentGame + 1) % GAMES.length
+        currentMove = 0
+        // rebuild board
+        for(let r=0;r<8;r++) for(let c=0;c<8;c++) if(pieceMap[r][c]){boardGroup.remove(pieceMap[r][c]);pieceMap[r][c]=null}
+        pieceMap = makeInitialPieceMap()
+        return
+      }
 
-    function resetGame(){
-      for(let r=0;r<8;r++) for(let c=0;c<8;c++) if(pieceMap[r][c]){boardGroup.remove(pieceMap[r][c]);pieceMap[r][c]=null}
-      anims.length=0; boardState=initBoard(); currentTurn=W; gameOver=false; moveTimer=0
-      spawnBoard(boardState)
+      const [fc, fr, tc, tr] = game[currentMove]
+      currentMove++
+
+      const movingMesh = pieceMap[fr][fc]
+      if (!movingMesh) return
+
+      // remove captured piece if any
+      if (pieceMap[tr][tc]) { boardGroup.remove(pieceMap[tr][tc]); pieceMap[tr][tc]=null }
+
+      const fromPos = colRow2Local(fr, fc).clone()
+      const toPos   = colRow2Local(tr, tc).clone()
+
+      pieceMap[fr][fc] = null
+      pieceMap[tr][tc] = movingMesh
+
+      anims.push({ mesh:movingMesh, from:fromPos, to:toPos, arcHeight:2.0, duration:ANIM_DURATION, elapsed:0 })
     }
 
     let time=0, animId, lastT=performance.now()
@@ -274,7 +244,7 @@ if(move.capture&&pieceMap[tr][tc]){scene.remove(pieceMap[tr][tc]);pieceMap[tr][t
       const now=performance.now()
       const dt=Math.min((now-lastT)/1000,0.05); lastT=now; time+=dt
 
-      boardGroup.rotation.y=time*0.15
+      boardGroup.rotation.y = time * 0.15
       camera.position.x=Math.sin(time*0.3)*4
       camera.position.y=16+Math.sin(time*0.2)*1.5
       camera.position.z=18+Math.cos(time*0.25)*2
@@ -285,6 +255,7 @@ if(move.capture&&pieceMap[tr][tc]){scene.remove(pieceMap[tr][tc]);pieceMap[tr][t
       pGeo.attributes.position.needsUpdate=true
       boardGlow.intensity=1.8+Math.sin(time*1.5)*0.5
 
+      // run animations
       for(let i=anims.length-1;i>=0;i--){
         const a=anims[i]; a.elapsed+=dt
         const t=Math.min(a.elapsed/a.duration,1), et=easeInOut(t)
@@ -293,14 +264,16 @@ if(move.capture&&pieceMap[tr][tc]){scene.remove(pieceMap[tr][tc]);pieceMap[tr][t
         if(t>=1) anims.splice(i,1)
       }
 
+      // gentle idle bob
       const animSet=new Set(anims.map(a=>a.mesh))
       for(let r=0;r<8;r++) for(let c=0;c<8;c++){
         const m=pieceMap[r][c]
         if(m&&!animSet.has(m)) m.position.y=YB+Math.sin(time*0.8+(r*8+c)*0.4)*0.03
       }
 
-      if(!gameOver){ moveTimer+=dt; if(moveTimer>=MOVE_INTERVAL&&anims.length===0){moveTimer=0;triggerMove()} }
-      else { resetTimer+=dt; if(resetTimer>=2.5){resetTimer=0;resetGame()} }
+      // schedule moves
+      moveTimer+=dt
+      if(moveTimer>=MOVE_INTERVAL && anims.length===0){ moveTimer=0; playNextMove() }
 
       renderer.render(scene,camera)
     }
