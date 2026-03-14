@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ChessHeroScene from '../components/ChessHeroScene'
+import ChessBoard3D from '../components/ChessBoard3D'
 import styles from './Home.module.css'
 
 const programs = [
@@ -139,17 +140,8 @@ export default function Home() {
               </div>
             </div>
             <div className={styles.aboutBoard}>
-              <div className={styles.miniBoard}>
-                {Array.from({ length: 64 }, (_, i) => (
-                  <div
-                    key={i}
-                    className={`${styles.sq} ${(Math.floor(i / 8) + i) % 2 === 0 ? styles.sqLight : styles.sqDark}`}
-                  />
-                ))}
-                <div className={styles.boardPiece} style={{ top: '12.5%', left: '50%' }}>♛</div>
-                <div className={styles.boardPiece} style={{ top: '37.5%', left: '25%' }}>♞</div>
-                <div className={styles.boardPiece} style={{ top: '62.5%', left: '62.5%' }}>♝</div>
-                <div className={styles.boardPiece} style={{ top: '87.5%', left: '37.5%' }}>♜</div>
+              <div className={styles.board3DWrap}>
+                <ChessBoard3D />
               </div>
             </div>
           </div>

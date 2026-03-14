@@ -291,13 +291,21 @@
 }
 
 .miniBoard {
+  .board3DWrap {
   position: relative;
-  width: 360px;
-  height: 360px;
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  grid-template-rows: repeat(8, 1fr);
-  box-shadow: 0 0 80px rgba(201, 168, 76, 0.15), 0 0 0 3px rgba(201,168,76,0.3);
+  width: 480px;
+  height: 480px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 80px rgba(201, 168, 76, 0.2), 0 0 0 1px rgba(201,168,76,0.2);
+}
+
+@media (max-width: 768px) {
+  .board3DWrap {
+    width: 100%;
+    height: 340px;
+  }
+}
 }
 
 .sq {
