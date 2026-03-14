@@ -26,7 +26,6 @@ export default function ChessBoard3D() {
     camera.position.set(0, 16, 18)
     camera.lookAt(0, 0, 0)
 
-    // ── LIGHTS ──────────────────────────────────────
     scene.add(new THREE.AmbientLight(0x222233, 4))
 
     const sun = new THREE.DirectionalLight(0xffd27a, 3)
@@ -49,7 +48,6 @@ export default function ChessBoard3D() {
     boardGlow.position.set(0, 5, 0)
     scene.add(boardGlow)
 
-    // ── MATERIALS ────────────────────────────────────
     const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf0e6d0, roughness: 0.1, metalness: 0.05 })
     const blackMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.15, metalness: 0.3 })
     const goldMat = new THREE.MeshStandardMaterial({ color: 0xc9a84c, roughness: 0.05, metalness: 1, emissive: 0xc9a84c, emissiveIntensity: 0.12 })
@@ -58,28 +56,30 @@ export default function ChessBoard3D() {
     const borderMat = new THREE.MeshStandardMaterial({ color: 0x5c2e00, roughness: 0.4, metalness: 0.3 })
     const goldBorderMat = new THREE.MeshStandardMaterial({ color: 0x8a6010, roughness: 0.2, metalness: 0.6 })
 
-    // ── HELPERS ──────────────────────────────────────
     function lathe(pts, mat, segs = 36) {
       const geo = new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x, y)), segs)
       const m = new THREE.Mesh(geo, mat)
-      m.castShadow = true; m.receiveShadow = true
+      m.castShadow = true
+      m.receiveShadow = true
       return m
     }
     function tor(r, t, mat) {
       const m = new THREE.Mesh(new THREE.TorusGeometry(r, t, 10, 40), mat)
-      m.rotation.x = Math.PI / 2; m.castShadow = true
+      m.rotation.x = Math.PI / 2
+      m.castShadow = true
       return m
     }
     function sph(r, mat) {
       const m = new THREE.Mesh(new THREE.SphereGeometry(r, 20, 20), mat)
-      m.castShadow = true; return m
+      m.castShadow = true
+      return m
     }
     function cyl(rt, rb, h, mat, s = 20) {
       const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, s), mat)
-      m.castShadow = true; return m
+      m.castShadow = true
+      return m
     }
 
-    // ── PIECE BUILDERS ───────────────────────────────
     function buildQueen(mat, gMat) {
       const g = new THREE.Group()
       g.add(lathe([[0,0],[0.9,0],[1.0,0.05],[1.0,0.18],[0.9,0.28],[0.75,0.36]], mat))
@@ -94,8 +94,12 @@ export default function ChessBoard3D() {
       const r5 = tor(0.44, 0.025, gMat); r5.position.y = 3.12; g.add(r5)
       for (let i = 0; i < 5; i++) {
         const a = (i / 5) * Math.PI * 2
-        const sp = cyl(0.025, 0.04, 0.32, mat, 6); sp.position.set(Math.cos(a)*0.32, 3.28, Math.sin(a)*0.32); g.add(sp)
-        const o = sph(0.055, gMat); o.position.set(Math.cos(a)*0.32, 3.46, Math.sin(a)*0.32); g.add(o)
+        const sp = cyl(0.025, 0.04, 0.32, mat, 6)
+        sp.position.set(Math.cos(a)*0.32, 3.28, Math.sin(a)*0.32)
+        g.add(sp)
+        const o = sph(0.055, gMat)
+        o.position.set(Math.cos(a)*0.32, 3.46, Math.sin(a)*0.32)
+        g.add(o)
       }
       const to = sph(0.1, gMat); to.position.y = 3.46; g.add(to)
       return g
@@ -147,7 +151,8 @@ export default function ChessBoard3D() {
         const a = (i / 4) * Math.PI * 2
         const bat = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.24, 0.2), mat)
         bat.position.set(Math.cos(a)*0.46, 2.18, Math.sin(a)*0.46)
-        bat.castShadow = true; g.add(bat)
+        bat.castShadow = true
+        g.add(bat)
       }
       return g
     }
@@ -160,17 +165,19 @@ export default function ChessBoard3D() {
       return g
     }
 
-    // ── CHESS BOARD ──────────────────────────────────
     const boardGroup = new THREE.Group()
     const sq = 1.3
     const N = 8
 
     const borderSize = N * sq + 1.0
     const border = new THREE.Mesh(new THREE.BoxGeometry(borderSize, 0.16, borderSize), borderMat)
-    border.position.y = -0.08; border.receiveShadow = true; boardGroup.add(border)
+    border.position.y = -0.08
+    border.receiveShadow = true
+    boardGroup.add(border)
 
     const innerBorder = new THREE.Mesh(new THREE.BoxGeometry(N * sq + 0.5, 0.18, N * sq + 0.5), goldBorderMat)
-    innerBorder.position.y = -0.07; boardGroup.add(innerBorder)
+    innerBorder.position.y = -0.07
+    boardGroup.add(innerBorder)
 
     for (let i = 0; i < N; i++) {
       for (let j = 0; j < N; j++) {
@@ -180,12 +187,12 @@ export default function ChessBoard3D() {
           isLight ? lightSqMat : darkSqMat
         )
         sqMesh.position.set((i - N/2 + 0.5) * sq, 0.05, (j - N/2 + 0.5) * sq)
-        sqMesh.receiveShadow = true; boardGroup.add(sqMesh)
+        sqMesh.receiveShadow = true
+        boardGroup.add(sqMesh)
       }
     }
     scene.add(boardGroup)
 
-    // ── PLACE ALL PIECES ─────────────────────────────
     const allPieces = []
     const sc = 0.65
     const yB = 0.1
@@ -198,7 +205,6 @@ export default function ChessBoard3D() {
       return piece
     }
 
-    // White
     place(buildRook(whiteMat, goldMat), 0, 0)
     place(buildKnight(whiteMat), 1, 0)
     place(buildBishop(whiteMat, goldMat), 2, 0)
@@ -209,7 +215,6 @@ export default function ChessBoard3D() {
     place(buildRook(whiteMat, goldMat), 7, 0)
     for (let i = 0; i < 8; i++) place(buildPawn(whiteMat), i, 1)
 
-    // Black
     place(buildRook(blackMat, goldMat), 0, 7)
     place(buildKnight(blackMat), 1, 7)
     place(buildBishop(blackMat, goldMat), 2, 7)
@@ -220,7 +225,6 @@ export default function ChessBoard3D() {
     place(buildRook(blackMat, goldMat), 7, 7)
     for (let i = 0; i < 8; i++) place(buildPawn(blackMat), i, 6)
 
-    // ── PARTICLES ────────────────────────────────────
     const pCount = 300
     const pGeo = new THREE.BufferGeometry()
     const pos = new Float32Array(pCount * 3)
@@ -235,7 +239,6 @@ export default function ChessBoard3D() {
     }))
     scene.add(particles)
 
-    // Ground
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(60, 60),
       new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.98 })
@@ -245,7 +248,6 @@ export default function ChessBoard3D() {
     ground.receiveShadow = true
     scene.add(ground)
 
-    // ── ANIMATE ──────────────────────────────────────
     let time = 0
     let animId
 
@@ -253,23 +255,19 @@ export default function ChessBoard3D() {
       animId = requestAnimationFrame(animate)
       time += 0.004
 
-      // Slow board rotation — cinematic reveal
       boardGroup.rotation.y = time * 0.18
 
-      // Camera gentle orbit
       camera.position.x = Math.sin(time * 0.3) * 4
       camera.position.y = 16 + Math.sin(time * 0.2) * 1.5
       camera.position.z = 18 + Math.cos(time * 0.25) * 2
       camera.lookAt(0, 0, 0)
 
-      // Pieces gently float at different phases
       allPieces.forEach((p, i) => {
         p.position.y = yB + Math.sin(time * 0.8 + i * 0.4) * 0.04
       })
 
       boardGlow.intensity = 1.8 + Math.sin(time * 1.5) * 0.5
 
-      // Particles drift up
       const pa = pGeo.attributes.position.array
       for (let i = 0; i < pCount; i++) {
         pa[i * 3 + 1] += 0.005
