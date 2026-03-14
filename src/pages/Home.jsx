@@ -43,7 +43,6 @@ export default function Home() {
   const [coachRef, coachInView] = useInView()
   const [formatsRef, formatsInView] = useInView()
   const [testimonialsRef, testimonialsInView] = useInView()
-
   const [counts, setCounts] = useState({ kids: 0, years: 0, rating: 0, reviews: 0 })
 
   useEffect(() => {
@@ -68,34 +67,41 @@ export default function Home() {
   return (
     <main className={styles.main}>
 
-      {/* ─── HERO ─────────────────────────────────────── */}
+      {/* ─── HERO — full screen chess board only ───── */}
       <section className={styles.hero}>
         <ChessHeroScene />
-        <div className={styles.heroOverlay} />
-        <div className={styles.heroContent}>
-          <div className={styles.heroBadge}>
-            <span>⭐ 4.9 Google Rating · 97+ Reviews</span>
-          </div>
-          <h1 className={styles.heroTitle}>
-            <span className={styles.heroTitleLine1}>Masters Are</span>
-            <span className={styles.heroTitleLine2}>Born Here</span>
-          </h1>
-          <p className={styles.heroSubtitle}>
-            Where young minds learn to think moves ahead.<br />
-            Expert chess coaching since 2013.
-          </p>
-          <div className={styles.heroCtas}>
-            <a href="mailto:checkvsmate@gmail.com" className={styles.ctaPrimary}>
-              Book Free Demo Class
-            </a>
-            <Link to="/gallery" className={styles.ctaSecondary}>
-              View Our Gallery
-            </Link>
-          </div>
-        </div>
         <div className={styles.heroScroll}>
           <div className={styles.scrollLine} />
           <span>Scroll</span>
+        </div>
+      </section>
+
+      {/* ─── TAGLINE SECTION below hero ─────────────── */}
+      <section className={styles.tagline}>
+        <div className={styles.container}>
+          <div className={styles.taglineInner}>
+            <div className={styles.taglineText}>
+              <div className={styles.heroBadge}>
+                <span>⭐ 4.9 Google Rating · 97+ Reviews</span>
+              </div>
+              <h1 className={styles.heroTitle}>
+                <span className={styles.heroTitleLine1}>Masters Are</span>
+                <span className={styles.heroTitleLine2}>Born Here</span>
+              </h1>
+              <p className={styles.heroSubtitle}>
+                Where young minds learn to think moves ahead.
+                Expert chess coaching since 2013.
+              </p>
+              <div className={styles.heroCtas}>
+                <a href="mailto:checkvsmate@gmail.com" className={styles.ctaPrimary}>
+                  Book Free Demo Class
+                </a>
+                <Link to="/gallery" className={styles.ctaSecondary}>
+                  View Our Gallery
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -155,11 +161,7 @@ export default function Home() {
           <h2 className={styles.sectionTitle}>Chess Training for All Ages</h2>
           <div className={styles.programsGrid}>
             {programs.map((p, i) => (
-              <div
-                key={p.age}
-                className={`${styles.programCard} ${programsInView ? styles.visible : ''}`}
-                style={{ animationDelay: `${i * 120}ms` }}
-              >
+              <div key={p.age} className={`${styles.programCard} ${programsInView ? styles.visible : ''}`} style={{ animationDelay: `${i * 120}ms` }}>
                 <div className={styles.programIcon}>{p.icon}</div>
                 <div className={styles.programAge}>{p.age}</div>
                 <h3 className={styles.programTitle}>{p.title}</h3>
@@ -180,18 +182,14 @@ export default function Home() {
               <div className={styles.coachAvatar}>♛</div>
               <h3 className={styles.coachName}>Puneet Manchanda</h3>
               <span className={styles.coachRole}>Founder & Head Coach</span>
-              <p className={styles.coachDesc}>
-                Founder of Check vs Mate Chess Academy (est. 2013), with 12+ years of full-time coaching experience. Has mentored hundreds of students across age groups and competitive levels, producing consistent district, state and national champions.
-              </p>
+              <p className={styles.coachDesc}>Founder of Check vs Mate Chess Academy (est. 2013), with 12+ years of full-time coaching experience. Has mentored hundreds of students across age groups and competitive levels, producing consistent district, state and national champions.</p>
               <div className={styles.coachSince}>Coaching since 2013</div>
             </div>
             <div className={`${styles.coachCard} ${coachInView ? styles.visible : ''}`} style={{ animationDelay: '200ms' }}>
               <div className={styles.coachAvatar}>♞</div>
               <h3 className={styles.coachName}>Chirag Atreja</h3>
               <span className={styles.coachRole}>Co-Founder & Coach</span>
-              <p className={styles.coachDesc}>
-                A passionate chess coach actively involved in training students since 2020, with a strong focus on concept clarity, structured preparation, and competitive mindset development. Known for his ability to make complex tactics accessible.
-              </p>
+              <p className={styles.coachDesc}>A passionate chess coach actively involved in training students since 2020, with a strong focus on concept clarity, structured preparation, and competitive mindset development. Known for his ability to make complex tactics accessible.</p>
               <div className={styles.coachSince}>Coaching since 2020</div>
             </div>
           </div>
@@ -205,11 +203,7 @@ export default function Home() {
           <h2 className={styles.sectionTitle}>Flexible Training Formats</h2>
           <div className={styles.formatsGrid}>
             {formats.map((f, i) => (
-              <div
-                key={f.title}
-                className={`${styles.formatCard} ${formatsInView ? styles.visible : ''}`}
-                style={{ animationDelay: `${i * 100}ms` }}
-              >
+              <div key={f.title} className={`${styles.formatCard} ${formatsInView ? styles.visible : ''}`} style={{ animationDelay: `${i * 100}ms` }}>
                 <span className={styles.formatIcon}>{f.icon}</span>
                 <h3 className={styles.formatTitle}>{f.title}</h3>
                 <p className={styles.formatDesc}>{f.desc}</p>
@@ -226,14 +220,8 @@ export default function Home() {
           <h2 className={styles.sectionTitle}>Voices of the Community</h2>
           <div className={styles.testimonialsGrid}>
             {testimonials.map((t, i) => (
-              <div
-                key={t.name}
-                className={`${styles.testimonialCard} ${testimonialsInView ? styles.visible : ''}`}
-                style={{ animationDelay: `${i * 150}ms` }}
-              >
-                <div className={styles.testimonialStars}>
-                  {'★'.repeat(t.stars)}
-                </div>
+              <div key={t.name} className={`${styles.testimonialCard} ${testimonialsInView ? styles.visible : ''}`} style={{ animationDelay: `${i * 150}ms` }}>
+                <div className={styles.testimonialStars}>{'★'.repeat(t.stars)}</div>
                 <p className={styles.testimonialQuote}>"{t.quote}"</p>
                 <span className={styles.testimonialName}>— {t.name}</span>
               </div>
@@ -251,12 +239,8 @@ export default function Home() {
             <h2 className={styles.ctaBannerTitle}>Ready to Begin Your Chess Journey?</h2>
             <p className={styles.ctaBannerSub}>Fresh batches starting soon. Limited seats available.</p>
             <div className={styles.ctaBannerButtons}>
-              <a href="mailto:checkvsmate@gmail.com" className={styles.ctaPrimary}>
-                Book a Free Demo
-              </a>
-              <a href="tel:9810436745" className={styles.ctaSecondary}>
-                Call Us: 9810436745
-              </a>
+              <a href="mailto:checkvsmate@gmail.com" className={styles.ctaPrimary}>Book a Free Demo</a>
+              <a href="tel:9810436745" className={styles.ctaSecondary}>Call Us: 9810436745</a>
             </div>
           </div>
         </div>

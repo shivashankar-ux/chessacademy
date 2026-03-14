@@ -11,26 +11,30 @@ export default function ChessHeroScene() {
     const W = mount.clientWidth
     const H = mount.clientHeight
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     renderer.setSize(W, H)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 1.3
+    renderer.setClearColor(0x000000, 1)
     mount.appendChild(renderer.domElement)
 
     const scene = new THREE.Scene()
-    scene.fog = new THREE.Fog(0x000000, 30, 70)
+    scene.background = new THREE.Color(0x000000)
+    scene.fog = new THREE.Fog(0x000000, 35, 80)
 
+    // Camera starts from a dramatic angle, then slowly orbits
     const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 200)
-    camera.position.set(-13, 14, 20)
-    camera.lookAt(-13, 0, 0)
+    camera.position.set(0, 18, 24)
+    camera.lookAt(0, 0, 0)
 
-    scene.add(new THREE.AmbientLight(0x111122, 4))
+    // ── LIGHTS ──────────────────────────────────────
+    scene.add(new THREE.AmbientLight(0x111122, 5))
 
-    const sun = new THREE.DirectionalLight(0xffd27a, 3.5)
-    sun.position.set(-10, 25, 15)
+    const sun = new THREE.DirectionalLight(0xffd27a, 4)
+    sun.position.set(-10, 28, 15)
     sun.castShadow = true
     sun.shadow.mapSize.set(2048, 2048)
     sun.shadow.camera.left = -20
@@ -38,17 +42,18 @@ export default function ChessHeroScene() {
     sun.shadow.camera.top = 20
     sun.shadow.camera.bottom = -20
     sun.shadow.camera.near = 1
-    sun.shadow.camera.far = 60
+    sun.shadow.camera.far = 70
     scene.add(sun)
 
     const fill = new THREE.DirectionalLight(0x4466cc, 0.8)
     fill.position.set(15, 8, -5)
     scene.add(fill)
 
-    const boardGlow = new THREE.PointLight(0xc9a84c, 1.5, 25)
-    boardGlow.position.set(-13, 3, 0)
+    const boardGlow = new THREE.PointLight(0xc9a84c, 2, 30)
+    boardGlow.position.set(0, 5, 0)
     scene.add(boardGlow)
 
+    // ── MATERIALS ────────────────────────────────────
     const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf0e6d0, roughness: 0.1, metalness: 0.05 })
     const blackMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.15, metalness: 0.3 })
     const goldMat = new THREE.MeshStandardMaterial({ color: 0xc9a84c, roughness: 0.05, metalness: 1, emissive: 0xc9a84c, emissiveIntensity: 0.1 })
@@ -57,11 +62,11 @@ export default function ChessHeroScene() {
     const borderMat = new THREE.MeshStandardMaterial({ color: 0x5c2e00, roughness: 0.4, metalness: 0.3 })
     const goldBorderMat = new THREE.MeshStandardMaterial({ color: 0x8a6010, roughness: 0.2, metalness: 0.6 })
 
+    // ── HELPERS ──────────────────────────────────────
     function lathe(pts, mat, segs = 36) {
       const geo = new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x, y)), segs)
       const m = new THREE.Mesh(geo, mat)
-      m.castShadow = true; m.receiveShadow = true
-      return m
+      m.castShadow = true; m.receiveShadow = true; return m
     }
     function tor(r, t, mat) {
       const m = new THREE.Mesh(new THREE.TorusGeometry(r, t, 10, 40), mat)
@@ -76,6 +81,7 @@ export default function ChessHeroScene() {
       m.castShadow = true; return m
     }
 
+    // ── PIECE BUILDERS ───────────────────────────────
     function buildQueen(mat, gMat) {
       const g = new THREE.Group()
       g.add(lathe([[0,0],[0.9,0],[1.0,0.05],[1.0,0.18],[0.9,0.28],[0.75,0.36]], mat))
@@ -156,53 +162,51 @@ export default function ChessHeroScene() {
       return g
     }
 
-    // ── BOARD ──────────────────────────────────────────
-    const boardGroup = new THREE.Group()
+    // ── BOARD ────────────────────────────────────────
+    // Wrap everything in one pivot group for 360 rotation
+    const pivot = new THREE.Group()
+    scene.add(pivot)
+
     const sq = 1.3
     const N = 8
 
-    const borderMesh = new THREE.Mesh(new THREE.BoxGeometry(N * sq + 1.0, 0.16, N * sq + 1.0), borderMat)
-    borderMesh.position.y = -0.08; borderMesh.receiveShadow = true; boardGroup.add(borderMesh)
+    const borderMesh = new THREE.Mesh(new THREE.BoxGeometry(N*sq+1.0, 0.16, N*sq+1.0), borderMat)
+    borderMesh.position.y = -0.08; borderMesh.receiveShadow = true; pivot.add(borderMesh)
 
-    const innerBorderMesh = new THREE.Mesh(new THREE.BoxGeometry(N * sq + 0.5, 0.18, N * sq + 0.5), goldBorderMat)
-    innerBorderMesh.position.y = -0.07; boardGroup.add(innerBorderMesh)
+    const innerBorderMesh = new THREE.Mesh(new THREE.BoxGeometry(N*sq+0.5, 0.18, N*sq+0.5), goldBorderMat)
+    innerBorderMesh.position.y = -0.07; pivot.add(innerBorderMesh)
 
     for (let i = 0; i < N; i++) {
       for (let j = 0; j < N; j++) {
         const isLight = (i + j) % 2 === 0
-        const sqMesh = new THREE.Mesh(new THREE.BoxGeometry(sq - 0.01, 0.1, sq - 0.01), isLight ? lightSqMat : darkSqMat)
-        sqMesh.position.set((i - N/2 + 0.5) * sq, 0.05, (j - N/2 + 0.5) * sq)
-        sqMesh.receiveShadow = true; boardGroup.add(sqMesh)
+        const sqMesh = new THREE.Mesh(
+          new THREE.BoxGeometry(sq-0.01, 0.1, sq-0.01),
+          isLight ? lightSqMat : darkSqMat
+        )
+        sqMesh.position.set((i-N/2+0.5)*sq, 0.05, (j-N/2+0.5)*sq)
+        sqMesh.receiveShadow = true; pivot.add(sqMesh)
       }
     }
 
-    // offset board to the LEFT
-    boardGroup.position.set(-13, 0, 0)
-    scene.add(boardGroup)
-
-    // ── PIECE GRID ─────────────────────────────────────
-    // pieceGrid[col][row] = mesh or null
+    // ── PIECE GRID ───────────────────────────────────
     const pieceGrid = Array.from({ length: 8 }, () => Array(8).fill(null))
     const sc = 0.65
     const yB = 0.1
 
     function colRowToXZ(col, row) {
-      return {
-        x: (col - N/2 + 0.5) * sq + boardGroup.position.x,
-        z: (row - N/2 + 0.5) * sq
-      }
+      return { x: (col - N/2 + 0.5) * sq, z: (row - N/2 + 0.5) * sq }
     }
 
     function spawnPiece(piece, col, row) {
       const { x, z } = colRowToXZ(col, row)
       piece.scale.set(sc, sc, sc)
       piece.position.set(x, yB, z)
-      scene.add(piece)
+      pivot.add(piece)
       pieceGrid[col][row] = piece
       return piece
     }
 
-    // Place all pieces
+    // Standard starting position
     spawnPiece(buildRook(whiteMat, goldMat), 0, 0)
     spawnPiece(buildKnight(whiteMat), 1, 0)
     spawnPiece(buildBishop(whiteMat, goldMat), 2, 0)
@@ -223,23 +227,38 @@ export default function ChessHeroScene() {
     spawnPiece(buildRook(blackMat, goldMat), 7, 7)
     for (let i = 0; i < 8; i++) spawnPiece(buildPawn(blackMat), i, 6)
 
-    // ── ENGLISH OPENING MOVES ─────────────────────────
-    // Each move: [fromCol, fromRow, toCol, toRow]
+    // ── LEGAL CHESS MOVES (English Opening + Sicilian) ─
+    // Format: [fromCol, fromRow, toCol, toRow]
+    // Columns 0-7 = a-h, Rows 0-1 = white back/pawns, 6-7 = black pawns/back
     const moves = [
-      [4, 1, 4, 3],   // 1. e4 (white pawn e2-e4)
-      [2, 6, 2, 4],   // 1... c5 (black pawn c7-c5 - Sicilian)
-      [6, 0, 5, 2],   // 2. Nf3 (white knight g1-f3)
-      [1, 7, 2, 5],   // 2... Nc6 (black knight b8-c6)
-      [5, 1, 5, 3],   // 3. d4 (white pawn f2-f4... actually d2-d4)
-      [2, 4, 3, 3],   // 3... cxd4 (black pawn captures)
-      [5, 2, 3, 3],   // 4. Nxd4 (white knight captures)
-      [6, 7, 5, 5],   // 4... Nf6 (black knight g8-f6)
-      [5, 0, 2, 3],   // 5. Nc3 (white knight b1-c3)
-      [3, 6, 3, 4],   // 5... d6 (black pawn d7-d5)
-      [2, 0, 4, 2],   // 6. Bc4 (white bishop c1-e3)
-      [0, 6, 0, 4],   // 6... a6 (black pawn a7-a5)
-      [3, 0, 7, 4],   // 7. Qd1-h5 (white queen move)
-      [4, 6, 4, 5],   // 7... e6 (black pawn e7-e6)
+      // 1. e4
+      [4, 1, 4, 3],
+      // 1... c5
+      [2, 6, 2, 4],
+      // 2. Nf3 (knight g1 to f3)
+      [6, 0, 5, 2],
+      // 2... Nc6 (knight b8 to c6)
+      [1, 7, 2, 5],
+      // 3. d4
+      [3, 1, 3, 3],
+      // 3... cxd4 (black c pawn takes d4)
+      [2, 4, 3, 3],
+      // 4. Nxd4 (white knight f3 takes d4) — knight moves legally
+      [5, 2, 3, 3],
+      // 4... Nf6 (black knight g8 to f6)
+      [6, 7, 5, 5],
+      // 5. Nc3 (white knight b1 to c3)
+      [1, 0, 2, 2],
+      // 5... d6
+      [3, 6, 3, 5],
+      // 6. Be2 (white bishop f1 to e2) — legal diagonal
+      [5, 0, 4, 1],
+      // 6... e5 (black pawn e7 to e5)
+      [4, 6, 4, 4],
+      // 7. Nb3 (white knight d4 to b3)
+      [3, 3, 1, 2],
+      // 7... Be7 (black bishop f8 to e7)
+      [5, 7, 4, 6],
     ]
 
     let moveIndex = 0
@@ -248,75 +267,78 @@ export default function ChessHeroScene() {
     let moveTarget = null
     let moveProgress = 0
     let moveStart = null
-    const MOVE_DURATION = 60  // frames
-    const PAUSE_DURATION = 90 // frames between moves
+    const MOVE_DURATION = 70
+    const PAUSE_DURATION = 100
     let pauseTimer = 0
-
-    // ── PARTICLES ─────────────────────────────────────
-    const pCount = 300
-    const pGeo = new THREE.BufferGeometry()
-    const pos = new Float32Array(pCount * 3)
-    for (let i = 0; i < pCount; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 35
-      pos[i * 3 + 1] = Math.random() * 20
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 35
-    }
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-    const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({
-      color: 0xc9a84c, size: 0.06, transparent: true, opacity: 0.4,
-    }))
-    scene.add(particles)
-
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(80, 80),
-      new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.98 })
-    )
-    ground.rotation.x = -Math.PI / 2
-    ground.position.y = -0.15
-    ground.receiveShadow = true
-    scene.add(ground)
-
-    // ── ANIMATE ────────────────────────────────────────
-    let time = 0
-    let animId
 
     function startNextMove() {
       if (moveIndex >= moves.length) moveIndex = 0
       const [fc, fr, tc, tr] = moves[moveIndex]
       const piece = pieceGrid[fc][fr]
-      if (!piece) { moveIndex++; return }
-
-      // remove captured piece if any
-      if (pieceGrid[tc][tr]) {
-        scene.remove(pieceGrid[tc][tr])
-        pieceGrid[tc][tr] = null
-      }
-
+      if (!piece) { moveIndex++; pauseTimer = 0; return }
+      if (pieceGrid[tc][tr]) { pivot.remove(pieceGrid[tc][tr]); pieceGrid[tc][tr] = null }
       pieceGrid[fc][fr] = null
       pieceGrid[tc][tr] = piece
-
       movingPiece = piece
-      moveStart = { ...piece.position }
+      moveStart = { x: piece.position.x, y: piece.position.y, z: piece.position.z }
       moveTarget = colRowToXZ(tc, tr)
       moveProgress = 0
       animating = true
       moveIndex++
     }
 
+    // ── PARTICLES ────────────────────────────────────
+    const pCount = 400
+    const pGeo = new THREE.BufferGeometry()
+    const pos = new Float32Array(pCount * 3)
+    for (let i = 0; i < pCount; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 40
+      pos[i * 3 + 1] = Math.random() * 25
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 40
+    }
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+    const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({
+      color: 0xc9a84c, size: 0.07, transparent: true, opacity: 0.45,
+    }))
+    scene.add(particles)
+
+    // Ground
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(100, 100),
+      new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.98 })
+    )
+    ground.rotation.x = -Math.PI / 2
+    ground.position.y = -0.2
+    ground.receiveShadow = true
+    scene.add(ground)
+
+    // ── ANIMATE ──────────────────────────────────────
+    let time = 0
+    let animId
+
     function animate() {
       animId = requestAnimationFrame(animate)
-      time += 0.005
+      time += 0.004
 
+      // ── 360° CINEMATIC SLOW ROTATION ──
+      // Full orbit in ~3 minutes, very smooth
+      const orbitAngle = time * 0.12  // very slow
+      const orbitRadius = 24
+      const orbitHeight = 16 + Math.sin(time * 0.08) * 4  // camera rises and dips
+
+      camera.position.x = Math.sin(orbitAngle) * orbitRadius
+      camera.position.y = orbitHeight
+      camera.position.z = Math.cos(orbitAngle) * orbitRadius
+      camera.lookAt(0, 1, 0)
+
+      // ── PIECE MOVES ──
       if (animating && movingPiece) {
         moveProgress++
         const t = Math.min(moveProgress / MOVE_DURATION, 1)
-        const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t // ease in-out
-
+        const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t
         movingPiece.position.x = moveStart.x + (moveTarget.x - moveStart.x) * ease
         movingPiece.position.z = moveStart.z + (moveTarget.z - moveStart.z) * ease
-        // arc up
-        movingPiece.position.y = yB + Math.sin(t * Math.PI) * 1.8
-
+        movingPiece.position.y = yB + Math.sin(t * Math.PI) * 2.0
         if (t >= 1) {
           movingPiece.position.y = yB
           animating = false
@@ -328,19 +350,14 @@ export default function ChessHeroScene() {
         if (pauseTimer >= PAUSE_DURATION) startNextMove()
       }
 
-      // gentle camera drift — stays focused on board left side
-      camera.position.x = -13 + Math.sin(time * 0.1) * 0.5
-      camera.position.y = 14 + Math.sin(time * 0.08) * 1
-      camera.position.z = 20 + Math.sin(time * 0.07) * 1.5
-      camera.lookAt(-13, 0, 0)
+      // Pulse glow
+      boardGlow.intensity = 1.8 + Math.sin(time * 1.5) * 0.6
 
-      boardGlow.intensity = 1.2 + Math.sin(time * 1.2) * 0.4
-
-      particles.rotation.y = time * 0.01
+      // Particles drift up
       const pa = pGeo.attributes.position.array
       for (let i = 0; i < pCount; i++) {
-        pa[i * 3 + 1] += 0.006
-        if (pa[i * 3 + 1] > 18) pa[i * 3 + 1] = 0
+        pa[i * 3 + 1] += 0.005
+        if (pa[i * 3 + 1] > 22) pa[i * 3 + 1] = 0
       }
       pGeo.attributes.position.needsUpdate = true
 
