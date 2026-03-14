@@ -232,7 +232,7 @@ export default function ChessBoard3D() {
         const p=board[r][c]; if(!p) continue
         const mesh=buildMesh(p.type,p.color)
         mesh.scale.set(SC,SC,SC); mesh.position.copy(colRow2World(r,c))
-        scene.add(mesh); pieceMap[r][c]=mesh
+        boardGroup.add(mesh); pieceMap[r][c]=mesh
       }
     }
 
@@ -250,8 +250,7 @@ export default function ChessBoard3D() {
       const [fr,fc]=move.from, [tr,tc]=move.to
       const movingMesh=pieceMap[fr][fc]
       if(!movingMesh) return
-      if(move.capture&&pieceMap[tr][tc]){scene.remove(pieceMap[tr][tc]);pieceMap[tr][tc]=null}
-      const fromPos=colRow2World(fr,fc).clone()
+if(move.capture&&pieceMap[tr][tc]){scene.remove(pieceMap[tr][tc]);pieceMap[tr][tc]=null}      const fromPos=colRow2World(fr,fc).clone()
       const toPos=colRow2World(tr,tc).clone()
       boardState=applyMove(boardState,move)
       pieceMap[fr][fc]=null; pieceMap[tr][tc]=movingMesh
@@ -263,7 +262,7 @@ export default function ChessBoard3D() {
     }
 
     function resetGame(){
-      for(let r=0;r<8;r++) for(let c=0;c<8;c++) if(pieceMap[r][c]){scene.remove(pieceMap[r][c]);pieceMap[r][c]=null}
+      for(let r=0;r<8;r++) for(let c=0;c<8;c++) if(pieceMap[r][c]){boardGroup.remove(pieceMap[r][c]);pieceMap[r][c]=null}
       anims.length=0; boardState=initBoard(); currentTurn=W; gameOver=false; moveTimer=0
       spawnBoard(boardState)
     }
