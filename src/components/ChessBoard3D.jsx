@@ -300,3 +300,5 @@ export default function ChessBoard3D() {
     <div ref={mountRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }} />
   )
 }
+
+
