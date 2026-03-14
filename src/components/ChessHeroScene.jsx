@@ -24,8 +24,8 @@ export default function ChessHeroScene() {
     scene.fog = new THREE.Fog(0x000000, 30, 70)
 
     const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 200)
-    camera.position.set(-7, 14, 20)
-    camera.lookAt(-7, 0, 0)
+    camera.position.set(-13, 14, 20)
+    camera.lookAt(-13, 0, 0)
 
     scene.add(new THREE.AmbientLight(0x111122, 4))
 
@@ -46,7 +46,7 @@ export default function ChessHeroScene() {
     scene.add(fill)
 
     const boardGlow = new THREE.PointLight(0xc9a84c, 1.5, 25)
-    boardGlow.position.set(-7, 3, 0)
+    boardGlow.position.set(-13, 3, 0)
     scene.add(boardGlow)
 
     const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf0e6d0, roughness: 0.1, metalness: 0.05 })
@@ -177,7 +177,7 @@ export default function ChessHeroScene() {
     }
 
     // offset board to the LEFT
-    boardGroup.position.set(-7, 0, 0)
+    boardGroup.position.set(-13, 0, 0)
     scene.add(boardGroup)
 
     // ── PIECE GRID ─────────────────────────────────────
@@ -329,10 +329,10 @@ export default function ChessHeroScene() {
       }
 
       // gentle camera drift — stays focused on board left side
-      camera.position.x = -7 + Math.sin(time * 0.1) * 0.8
+      camera.position.x = -13 + Math.sin(time * 0.1) * 0.5
       camera.position.y = 14 + Math.sin(time * 0.08) * 1
       camera.position.z = 20 + Math.sin(time * 0.07) * 1.5
-      camera.lookAt(-7, 0, 0)
+      camera.lookAt(-13, 0, 0)
 
       boardGlow.intensity = 1.2 + Math.sin(time * 1.2) * 0.4
 
