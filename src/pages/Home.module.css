@@ -8,11 +8,10 @@
   height: 100vh;
   min-height: 700px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-end;
+  justify-content: flex-end;
   overflow: hidden;
 }
-
 .heroOverlay {
   position: absolute;
   inset: 0;
@@ -29,9 +28,12 @@
 .heroContent {
   position: relative;
   z-index: 2;
-  text-align: center;
-  padding: 0 1.5rem;
-  max-width: 900px;
+  text-align: left;
+  padding: 0 4rem;
+  max-width: 660px;
+  margin-left: auto;
+  margin-right: 0;
+  margin-bottom: 4rem;
 }
 
 .heroBadge {
@@ -89,7 +91,7 @@
 .heroCtas {
   display: flex;
   gap: 1rem;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   animation: fadeUp 1s ease 0.8s both;
 }
